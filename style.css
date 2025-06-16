@@ -1,0 +1,30 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#files-list {
+    list-style: none;
+    text-align: left;
+}
+
+.col {
+    margin-top: 3vh;
+}
+
+
+#upload-files-form button {
+    margin: 0.5em;
+}
+
+#ime-csv-div input {
+    display: inline;
+}
+
+#canvas-div {
+    max-width: 90vw;
+    overflow: auto;
+    max-height: 400px;
+    border: 1px groove rgb(187, 187, 187);
+    border-radius: 0.5em;
+}
