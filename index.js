@@ -8,6 +8,9 @@ const exportForm = document.getElementById("export-form");
 let uploadedFiles = [];
 let mergedCSVContent = "";
 
+// Barve za prve vrstice posameznih datotek
+const headerColors = ["#dfefff", "#ffe6df", "#e0ffe0", "#fffacd", "#f0e68c", "#f5e6ff", "#d0f0f0"];
+
 uploadFilesForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -16,16 +19,20 @@ uploadFilesForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  mergedCSVContent = await mergeCSVFiles(uploadedFiles);
+  const result = await mergeCSVFiles(uploadedFiles);
+  mergedCSVContent = result.csv;
   description.textContent = "CSV datoteke uspešno združene.";
-  drawCSVOnCanvas(mergedCSVContent);
+  drawCSVOnCanvas(mergedCSVContent, result.headers);
 });
 
 uploadFilesForm.addEventListener("reset", () => {
   uploadedFiles = [];
   filesList.innerHTML = "";
   description.textContent = "";
-  document.getElementById("csv-canvas").getContext("2d").clearRect(0, 0, 1200, 800);
+  const canvas = document.getElementById("csv-canvas");
+  canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+  mergedCSVContent = "";
+  filenameInput.value = "";
 });
 
 uploadFilesInput.addEventListener("change", (e) => {
@@ -65,24 +72,25 @@ function readFileAsText(file) {
 }
 
 async function mergeCSVFiles(files) {
-  let merged = "";
+  let mergedLines = [];
+  let headerLineIndices = [];
+
   for (let i = 0; i < files.length; i++) {
     const content = await readFileAsText(files[i]);
     const lines = content.trim().split("\n");
 
     if (lines.length === 0) continue;
-    merged += lines.join("\n") + "\n"; // prva z glavo
-    /*
-    if (i === 0) {
-      merged += lines.join("\n") + "\n"; // prva z glavo
-    } else {
-      merged += lines.slice(1).join("\n") + "\n"; // brez glave
-    }*/
+
+    // Shrani, kje se začne vsaka datoteka
+    headerLineIndices.push(mergedLines.length);
+
+    mergedLines = mergedLines.concat(lines);
   }
-  return merged.trim();
+
+  return { csv: mergedLines.join("\n"), headers: headerLineIndices };
 }
 
-function drawCSVOnCanvas(csvText) {
+function drawCSVOnCanvas(csvText, headerLineIndices) {
   const canvas = document.getElementById("csv-canvas");
   const ctx = canvas.getContext("2d");
 
@@ -95,24 +103,31 @@ function drawCSVOnCanvas(csvText) {
   const cellHeight = 40;
   const padding = 5;
 
+  const numRows = table.length;
+  const numCols = Math.max(...table.map(r => r.length));
+
+  canvas.width = Math.min(window.innerWidth * 0.95, numCols * cellWidth);
+  canvas.height = Math.min(window.innerHeight * 0.7, numRows * cellHeight);
+
   ctx.font = "14px Arial";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
 
-  for (let r = 0; r < table.length; r++) {
+  for (let r = 0; r < numRows; r++) {
+    const isHeaderRow = headerLineIndices.includes(r);
+    const colorIndex = headerLineIndices.indexOf(r) % headerColors.length;
+    const bgColor = isHeaderRow ? headerColors[colorIndex] : "#ffffff";
+
     for (let c = 0; c < table[r].length; c++) {
       const x = c * cellWidth;
       const y = r * cellHeight;
 
-      // obroba
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(x, y, cellWidth, cellHeight);
+
       ctx.strokeStyle = "#888";
       ctx.strokeRect(x, y, cellWidth, cellHeight);
 
-      // ozadje celice
-      //ctx.fillStyle = r === 0 ? "#dfefff" : "#fff";
-      ctx.fillRect(x, y, cellWidth, cellHeight);
-
-      // vsebina
       ctx.fillStyle = "#000";
       ctx.fillText(table[r][c].trim(), x + padding, y + cellHeight / 2);
     }
