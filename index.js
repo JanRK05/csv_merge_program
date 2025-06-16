@@ -71,12 +71,13 @@ async function mergeCSVFiles(files) {
     const lines = content.trim().split("\n");
 
     if (lines.length === 0) continue;
-
+    merged += lines.join("\n") + "\n"; // prva z glavo
+    /*
     if (i === 0) {
       merged += lines.join("\n") + "\n"; // prva z glavo
     } else {
       merged += lines.slice(1).join("\n") + "\n"; // brez glave
-    }
+    }*/
   }
   return merged.trim();
 }
@@ -108,7 +109,7 @@ function drawCSVOnCanvas(csvText) {
       ctx.strokeRect(x, y, cellWidth, cellHeight);
 
       // ozadje celice
-      ctx.fillStyle = r === 0 ? "#dfefff" : "#fff";
+      //ctx.fillStyle = r === 0 ? "#dfefff" : "#fff";
       ctx.fillRect(x, y, cellWidth, cellHeight);
 
       // vsebina
